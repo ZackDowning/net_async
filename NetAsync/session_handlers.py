@@ -10,10 +10,10 @@ if getattr(sys, 'frozen', False):
 else:
     for path in sys.path:
         if path.__contains__('site-packages'):
-            if os.path.exists(f'{path}/AsyncSessions/templates'):
-                os.environ['NET_TEXTFSM'] = f'{path}/AsyncSessions/templates'
-            elif os.path.exists('./AsyncSessions/templates'):
-                os.environ['NET_TEXTFSM'] = './AsyncSessions/templates'
+            if os.path.exists(f'{path}/NetAsync/templates'):
+                os.environ['NET_TEXTFSM'] = f'{path}/NetAsync/templates'
+            elif os.path.exists('./NetAsync/templates'):
+                os.environ['NET_TEXTFSM'] = './NetAsync/templates'
             elif os.path.exists('./templates'):
                 os.environ['NET_TEXTFSM'] = './templates'
             else:
