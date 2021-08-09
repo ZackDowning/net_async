@@ -94,9 +94,10 @@ class BugCheck:
     def __init__(self, successful_devices, failed_devices, mgmt_ips):
         if len(successful_devices) + len(failed_devices) != len(mgmt_ips):
             self.bug_devices = []
-            for s_device in successful_devices:
-                if all(s_device['ip_address'] != ip for ip in mgmt_ips):
-                    self.bug_devices.append(s_device)
+            for ip in mgmt_ips:
+                if all(ip != s_device['ip_address'] for s_device in successful_devices) and \
+                        all(ip != f_device['ip_address'] for f_device in failed_devices):
+                    self.bug_devices.append(ip)
             self.bug = True
         else:
             self.bug = False

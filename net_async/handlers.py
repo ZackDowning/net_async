@@ -2,7 +2,8 @@ import os
 import sys
 from concurrent.futures import ThreadPoolExecutor, wait
 from netmiko import ConnectHandler, ssh_exception, SSHDetect
-from exceptions import TemplatesNotFoundWithinPackage, MissingArgument
+from net_async.exceptions import TemplatesNotFoundWithinPackage, MissingArgument
+from net_async.validators import reachability
 
 # Checks for TextFSM templates within single file bundle if code is frozen
 if getattr(sys, 'frozen', False):
@@ -177,24 +178,37 @@ class AsyncSessions:
                 'password': password,
                 'ip_address': ip_address
             }
-            with Connection(**args) as conn:
-                if conn.authorization:
-                    if verbose:
-                        print(f'Finished: {ip_address}')
-                    function(conn)
-                    self.successful_devices.append = {
-                        'ip_address': ip_address,
-                        'device_type': conn.devicetype,
-                        'authentication': conn.authentication,
-                        'authorization': conn.authorization,
-                        'exception': conn.exception
-                    }
-                else:
-                    self.failed_devices.append({
-                        'ip_address': ip_address,
-                        'device_type': conn.devicetype,
-                        'authentication': conn.authentication,
-                        'authorization': conn.authorization,
-                        'exception': conn.exception
-                    })
+            if reachability(ip_address, 2):
+                with Connection(**args) as conn:
+                    if conn.authorization:
+                        function(conn)
+                        self.successful_devices.append = {
+                            'ip_address': ip_address,
+                            'device_type': conn.devicetype,
+                            'authentication': conn.authentication,
+                            'authorization': conn.authorization,
+                            'exception': conn.exception
+                        }
+                        if verbose:
+                            print(f'Success: {ip_address}')
+                    else:
+                        self.failed_devices.append({
+                            'ip_address': ip_address,
+                            'device_type': conn.devicetype,
+                            'authentication': conn.authentication,
+                            'authorization': conn.authorization,
+                            'exception': conn.exception
+                        })
+                        if verbose:
+                            print(f'Failure: {ip_address}')
+            else:
+                self.failed_devices.append({
+                    'ip_address': ip_address,
+                    'device_type': 'Unknown',
+                    'authentication': False,
+                    'authorization': False,
+                    'exception': 'NoICMPEcho'
+                })
+                if verbose:
+                    print(f'Failure: {ip_address}')
         multithread(connection, mgmt_ips)
