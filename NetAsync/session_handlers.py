@@ -50,7 +50,6 @@ class Connection:
         self.exception = 'None'
         self.authentication = False
         self.authorization = False
-        self.connectivity = False
         self.priviledged = False
         self.session = None
         self.enable = enable
@@ -160,30 +159,10 @@ class Connection:
             self.session.disconnect()
 
 
-class MultiThread:
-    """Multithread Initiator"""
-    def __init__(self, function=None, iterable=None, successful_devices=None, failed_devices=None, threads=50):
-        self.successful_devices = successful_devices
-        self.failed_devices = failed_devices
-        self.iterable = iterable
-        self.threads = threads
-        self.function = function
-        self.iter_len = len(iterable)
-
-    def mt(self):
-        """Executes multithreading on provided function and iterable"""
-        if self.iter_len < 50:
-            self.threads = self.iter_len
-        executor = ThreadPoolExecutor(self.threads)
-        futures = [executor.submit(self.function, val) for val in self.iterable]
-        wait(futures, timeout=None)
-        return self
-
-    def bug(self):
-        """Returns bool if Windows PyInstaller bug is present with provided lists for successful and failed devices"""
-        successful = len(self.successful_devices)
-        failed = len(self.failed_devices)
-        if (successful + failed) == self.iter_len:
-            return False
-        else:
-            return True
+def multithread(function=None, iterable=None, threads=100):
+    iter_len = len(iterable)
+    if iter_len < threads:
+        threads = iter_len
+    executor = ThreadPoolExecutor(threads)
+    futures = [executor.submit(function, val) for val in iterable]
+    wait(futures, timeout=None)
