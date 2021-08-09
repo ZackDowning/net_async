@@ -21,7 +21,9 @@ else:
 
 
 class Connection:
-    """SSH or TELNET Connection Initiator"""
+    """SSH or TELNET Connection Initiator\n
+
+    """
     def __enter__(self):
         return self
 
@@ -166,3 +168,37 @@ def multithread(function=None, iterable=None, threads=100):
     executor = ThreadPoolExecutor(threads)
     futures = [executor.submit(function, val) for val in iterable]
     wait(futures, timeout=None)
+
+
+class AsyncSessions:
+    def __init__(self, username, password, mgmt_ips, function, verbose=False):
+        self.successful_devices = []
+        self.failed_devices = []
+
+        def connection(ip_address):
+            args = {
+                'username': username,
+                'password': password,
+                'ip_address': ip_address
+            }
+            with Connection(**args) as conn:
+                if conn.authorization:
+                    if verbose:
+                        print(f'Finished: {ip_address}')
+                    function(conn)
+                    self.successful_devices.append = {
+                        'ip_address': ip_address,
+                        'device_type': conn.devicetype,
+                        'authentication': conn.authentication,
+                        'authorization': conn.authorization,
+                        'exception': conn.exception
+                    }
+                else:
+                    self.failed_devices.append({
+                        'ip_address': ip_address,
+                        'device_type': conn.devicetype,
+                        'authentication': conn.authentication,
+                        'authorization': conn.authorization,
+                        'exception': conn.exception
+                    })
+        multithread(connection, mgmt_ips)

@@ -88,3 +88,15 @@ class MgmtIPAddresses:
                     """Bool of management IP address file input validation"""
                 else:
                     self.mgmt_ips.append(ip_address)
+
+
+class BugCheck:
+    def __init__(self, successful_devices, failed_devices, mgmt_ips):
+        if len(successful_devices) + len(failed_devices) != len(mgmt_ips):
+            self.bug_devices = []
+            for s_device in successful_devices:
+                if all(s_device['ip_address'] != ip for ip in mgmt_ips):
+                    self.bug_devices.append(s_device)
+            self.bug = True
+        else:
+            self.bug = False
