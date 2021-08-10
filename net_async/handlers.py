@@ -158,7 +158,7 @@ class Connection:
             self.session.disconnect()
 
 
-def multithread(function=None, iterable=None, threads=100):
+def multithread(function=None, iterable=None, threads=50):
     iter_len = len(iterable)
     if iter_len < threads:
         threads = iter_len
@@ -178,7 +178,8 @@ class AsyncSessions:
                 'password': password,
                 'ip_address': ip_address
             }
-            if reachability(ip_address, 2):
+            connectivity = reachability(ip_address, 2)
+            if connectivity:
                 with Connection(**args) as conn:
                     if conn.authorization:
                         function(conn)

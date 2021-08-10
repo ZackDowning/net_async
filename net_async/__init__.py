@@ -1,4 +1,4 @@
-from net_async.handlers import AsyncSessions
+from net_async.handlers import AsyncSessions, Connection
 from net_async.validators import BugCheck
 from net_async.exceptions import TemplatesNotFoundWithinPackage, MissingArgument
 
@@ -7,5 +7,6 @@ __all__ = (
     AsyncSessions,
     BugCheck,
     TemplatesNotFoundWithinPackage,
-    MissingArgument
+    MissingArgument,
+    Connection
 )
