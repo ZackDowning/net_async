@@ -1,5 +1,4 @@
 import re
-from icmplib import ping
 
 
 def ipv4(address):
@@ -60,11 +59,6 @@ def macaddress(address):
             return True
         else:
             return False
-
-
-def reachability(ip_address, count=4):
-    """Returns bool if host is reachable with default count of 4 pings"""
-    return ping(ip_address, privileged=False, count=count).is_alive
 
 
 class MgmtIPAddresses:
