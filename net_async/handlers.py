@@ -65,6 +65,7 @@ class Connection:
         if self.enable:
             self.device['secret'] = enable_pw
         self.session = None
+        self.hostname = ''
 
         def device_check(device):
             while True:
@@ -96,12 +97,12 @@ class Connection:
                 self.device['device_type'] = autodetect
                 self.devicetype = autodetect
                 device_check(self.device)
-            except ValueError:
+            except (ValueError, EOFError):
                 try:
                     self.device['device_type'] = 'cisco_ios'
                     self.devicetype = 'cisco_ios'
                     device_check(self.device)
-                except ValueError:
+                except (ValueError, EOFError):
                     self.device['device_type'] = 'cisco_ios'
                     self.devicetype = 'cisco_ios'
                     device_check(self.device)
@@ -179,26 +180,23 @@ class AsyncSessions:
                 'password': password,
                 'ip_address': ip_address
             }
-            with Connection(**args) as conn:
-                if conn.authorization:
-                    function(conn)
-                    self.successful_devices.append({
+            with Connection(**args) as session:
+                device = {
                         'ip_address': ip_address,
-                        'device_type': conn.devicetype,
-                        'authentication': conn.authentication,
-                        'authorization': conn.authorization,
-                        'exception': conn.exception
-                    })
+                        'device_type': session.devicetype,
+                        'connectivity': session.connectivity,
+                        'authentication': session.authentication,
+                        'authorization': session.authorization,
+                        'exception': session.exception
+                    }
+                if session.authorization:
+                    function(session)
+                    device['hostname'] = session.hostname
+                    self.successful_devices.append(device)
                     if verbose:
                         print(f'Success: {ip_address}')
                 else:
-                    self.failed_devices.append({
-                        'ip_address': ip_address,
-                        'device_type': conn.devicetype,
-                        'authentication': conn.authentication,
-                        'authorization': conn.authorization,
-                        'exception': conn.exception
-                    })
+                    self.failed_devices.append(device)
                     if verbose:
                         print(f'Failure: {ip_address}')
         try:
