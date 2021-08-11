@@ -49,6 +49,7 @@ class Connection:
         password = arg('password')
         self.con_type = None
         self.exception = 'None'
+        self.connectivity = False
         self.authentication = False
         self.authorization = False
         self.priviledged = False
@@ -72,9 +73,12 @@ class Connection:
                 if self.enable:
                     self.session = ConnectHandler(**device)
                     self.session.enable()
-                    if not self.send_command('show run').__contains__('Invalid input detected'):
+                    showver = self.send_command('show version')
+                    if not showver.__contains__('Failed'):
                         self.authorization = True
-                        self.priviledged = True
+                        self.hostname = showver[0]['hostname']
+                        if not self.send_command('show run').__contains__('Invalid input detected'):
+                            self.priviledged = True
                     break
                 else:
                     self.session = ConnectHandler(**device)
@@ -85,6 +89,7 @@ class Connection:
                         if self.send_command('show run').__contains__('Invalid input detected'):
                             self.enable = True
                             self.device['secret'] = enable_pw
+                            self.session.disconnect()
                         else:
                             self.priviledged = True
                             break
