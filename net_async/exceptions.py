@@ -4,3 +4,7 @@ class TemplatesNotFoundWithinPackage(Exception):
 
 class MissingArgument(Exception):
     pass
+
+
+class InputError(Exception):
+    pass

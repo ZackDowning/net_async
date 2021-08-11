@@ -1,9 +1,9 @@
 import os
 import sys
-from concurrent.futures import ThreadPoolExecutor, wait
+from multiprocessing.dummy import Pool
 from netmiko import ConnectHandler, ssh_exception, SSHDetect
-from net_async.exceptions import TemplatesNotFoundWithinPackage, MissingArgument
-from net_async.validators import reachability
+from net_async.exceptions import TemplatesNotFoundWithinPackage, MissingArgument, InputError
+from textfsm.parser import TextFSMError
 
 # Checks for TextFSM templates within single file bundle if code is frozen
 if getattr(sys, 'frozen', False):
@@ -145,26 +145,27 @@ class Connection:
         if self.session is None:
             pass
         else:
-            return self.session.send_command(command, delay_factor=4, use_textfsm=True)
+            try:
+                return self.session.send_command(command, delay_factor=60, use_textfsm=True)
+            except TextFSMError:
+                return self.session.send_command(command, delay_factor=60)
 
     def send_config_set(self, config_set):
         if self.session is None:
             pass
         else:
-            return self.session.send_config_set(config_set, delay_factor=4)
+            return self.session.send_config_set(config_set, delay_factor=60)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.session is not None:
             self.session.disconnect()
 
 
-def multithread(function=None, iterable=None, threads=50):
+def multithread(function=None, iterable=None, threads=100):
     iter_len = len(iterable)
     if iter_len < threads:
         threads = iter_len
-    executor = ThreadPoolExecutor(threads)
-    futures = [executor.submit(function, val) for val in iterable]
-    wait(futures, timeout=None)
+    Pool(threads).map(function, iterable)
 
 
 class AsyncSessions:
@@ -178,38 +179,29 @@ class AsyncSessions:
                 'password': password,
                 'ip_address': ip_address
             }
-            connectivity = reachability(ip_address, 2)
-            if connectivity:
-                with Connection(**args) as conn:
-                    if conn.authorization:
-                        function(conn)
-                        self.successful_devices.append = {
-                            'ip_address': ip_address,
-                            'device_type': conn.devicetype,
-                            'authentication': conn.authentication,
-                            'authorization': conn.authorization,
-                            'exception': conn.exception
-                        }
-                        if verbose:
-                            print(f'Success: {ip_address}')
-                    else:
-                        self.failed_devices.append({
-                            'ip_address': ip_address,
-                            'device_type': conn.devicetype,
-                            'authentication': conn.authentication,
-                            'authorization': conn.authorization,
-                            'exception': conn.exception
-                        })
-                        if verbose:
-                            print(f'Failure: {ip_address}')
-            else:
-                self.failed_devices.append({
-                    'ip_address': ip_address,
-                    'device_type': 'Unknown',
-                    'authentication': False,
-                    'authorization': False,
-                    'exception': 'NoICMPEcho'
-                })
-                if verbose:
-                    print(f'Failure: {ip_address}')
-        multithread(connection, mgmt_ips)
+            with Connection(**args) as conn:
+                if conn.authorization:
+                    function(conn)
+                    self.successful_devices.append({
+                        'ip_address': ip_address,
+                        'device_type': conn.devicetype,
+                        'authentication': conn.authentication,
+                        'authorization': conn.authorization,
+                        'exception': conn.exception
+                    })
+                    if verbose:
+                        print(f'Success: {ip_address}')
+                else:
+                    self.failed_devices.append({
+                        'ip_address': ip_address,
+                        'device_type': conn.devicetype,
+                        'authentication': conn.authentication,
+                        'authorization': conn.authorization,
+                        'exception': conn.exception
+                    })
+                    if verbose:
+                        print(f'Failure: {ip_address}')
+        try:
+            multithread(connection, mgmt_ips)
+        except TypeError:
+            raise InputError('No Management IP Addresses found')
