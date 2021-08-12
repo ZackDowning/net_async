@@ -186,6 +186,8 @@ class AsyncSessions:
                 'password': password,
                 'ip_address': ip_address
             }
+            if verbose:
+                print(f'Trying: {ip_address}')
             with Connection(**args) as session:
                 device = {
                         'ip_address': ip_address,
@@ -205,7 +207,7 @@ class AsyncSessions:
                     )
                     self.successful_devices.append(device)
                     if verbose:
-                        print(f'Success: {ip_address}')
+                        print(f'Success: {ip_address} | {session.hostname}')
                 else:
                     self.failed_devices.append(device)
                     if verbose:
