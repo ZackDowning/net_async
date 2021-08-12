@@ -178,6 +178,7 @@ class AsyncSessions:
     def __init__(self, username, password, mgmt_ips, function, verbose=False):
         self.successful_devices = []
         self.failed_devices = []
+        self.outputs = []
 
         def connection(ip_address):
             args = {
@@ -195,8 +196,13 @@ class AsyncSessions:
                         'exception': session.exception
                     }
                 if session.authorization:
-                    function(session)
                     device['hostname'] = session.hostname
+                    self.outputs.append(
+                        {
+                            'device': device,
+                            'output': function(session)
+                        }
+                    )
                     self.successful_devices.append(device)
                     if verbose:
                         print(f'Success: {ip_address}')
