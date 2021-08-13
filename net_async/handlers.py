@@ -19,6 +19,7 @@ else:
                 os.environ['NET_TEXTFSM'] = './templates'
             else:
                 raise TemplatesNotFoundWithinPackage
+            break
 
 
 class Connection:
@@ -67,6 +68,27 @@ class Connection:
             self.device['secret'] = enable_pw
         self.session = None
         self.hostname = ''
+        self.software_version = ''
+        self.model = ''
+        self.serial = ''
+        self.rommon_version = ''
+
+#       TODO: Add full 'show inventory' inventory and switch stack inventory from multiple entries in show version
+
+        def inventory(showver):
+            if self.devicetype.__contains__('cisco_ios'):
+                self.software_version = showver[0]['version']
+                self.rommon_version = showver[0]['rommon']
+                self.model = showver[0]['hardware'][0]
+                self.serial = showver[0]['serial'][0]
+            elif self.devicetype == 'cisco_nxos':
+                self.software_version = showver[0]['os']
+                sh_inv = self.send_command('show inventory')
+                for x in sh_inv:
+                    if x['name'] == 'Chassis':
+                        self.serial = x['sn']
+                        self.model = x['pid']
+                        break
 
         def device_check(device):
             while True:
@@ -86,6 +108,7 @@ class Connection:
                     if not showver.__contains__('Failed'):
                         self.authorization = True
                         self.hostname = showver[0]['hostname']
+                        inventory(showver)
                         if self.send_command('show run').__contains__('Invalid input detected'):
                             self.enable = True
                             self.device['secret'] = enable_pw
@@ -189,16 +212,16 @@ class AsyncSessions:
             if verbose:
                 print(f'Trying: {ip_address}')
             with Connection(**args) as session:
-                device = {
-                        'ip_address': ip_address,
-                        'device_type': session.devicetype,
-                        'connectivity': session.connectivity,
-                        'authentication': session.authentication,
-                        'authorization': session.authorization,
-                        'exception': session.exception
-                    }
                 if session.authorization:
-                    device['hostname'] = session.hostname
+                    device = {
+                        'ip_address': ip_address,
+                        'connection_type': session.con_type,
+                        'hostname': session.hostname,
+                        'model': session.model,
+                        'rommon': session.rommon_version,
+                        'software_version': session.software_version,
+                        'serial': session.serial
+                    }
                     self.outputs.append(
                         {
                             'device': device,
@@ -209,6 +232,15 @@ class AsyncSessions:
                     if verbose:
                         print(f'Success: {ip_address} | {session.hostname}')
                 else:
+                    device = {
+                        'ip_address': ip_address,
+                        'connection_type': session.con_type,
+                        'device_type': session.devicetype,
+                        'connectivity': session.connectivity,
+                        'authentication': session.authentication,
+                        'authorization': session.authorization,
+                        'exception': session.exception
+                    }
                     self.failed_devices.append(device)
                     if verbose:
                         print(f'Failure: {ip_address}')
