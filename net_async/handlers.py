@@ -138,7 +138,7 @@ class Connection:
             self.connectivity = True
             self.con_type = 'SSH'
         except (ConnectionRefusedError, ValueError, ssh_exception.NetmikoAuthenticationException,
-                ssh_exception.NetmikoTimeoutException, ssh_exception.SSHException):
+                ssh_exception.NetmikoTimeoutException, ssh_exception.SSHException, ConnectionResetError):
             try:
                 try:
                     self.device['device_type'] = 'cisco_ios_telnet'
@@ -167,6 +167,8 @@ class Connection:
                 self.exception = 'ValueError'
             except TimeoutError:
                 self.exception = 'TimeoutError'
+            except ConnectionResetError:
+                self.exception = 'ConnectionResetError'
         except OSError:
             self.exception = 'OSError'
         except ConnectionResetError:
