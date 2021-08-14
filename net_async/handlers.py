@@ -169,6 +169,8 @@ class Connection:
                 self.exception = 'TimeoutError'
         except OSError:
             self.exception = 'OSError'
+        except ConnectionResetError:
+            self.exception = 'ConnectionResetError'
 
     def send_command(self, command):
         if self.session is None:
