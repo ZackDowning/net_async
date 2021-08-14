@@ -4,7 +4,6 @@ from multiprocessing.dummy import Pool
 from netmiko import ConnectHandler, ssh_exception, SSHDetect
 from net_async.exceptions import TemplatesNotFoundWithinPackage, MissingArgument, InputError
 from textfsm.parser import TextFSMError
-from paramiko import SSHException
 
 # Checks for TextFSM templates within single file bundle if code is frozen
 if getattr(sys, 'frozen', False):
@@ -139,7 +138,7 @@ class Connection:
             self.connectivity = True
             self.con_type = 'SSH'
         except (ConnectionRefusedError, ValueError, ssh_exception.NetmikoAuthenticationException,
-                ssh_exception.NetmikoTimeoutException, SSHException):
+                ssh_exception.NetmikoTimeoutException, ssh_exception.SSHException):
             try:
                 try:
                     self.device['device_type'] = 'cisco_ios_telnet'
