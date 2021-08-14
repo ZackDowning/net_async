@@ -198,7 +198,7 @@ def multithread(function=None, iterable=None, threads=100):
 
 
 class AsyncSessions:
-    def __init__(self, username, password, mgmt_ips, function, verbose=False):
+    def __init__(self, username, password, mgmt_ips, function, enable_pw='', verbose=False):
         self.successful_devices = []
         self.failed_devices = []
         self.outputs = []
@@ -209,6 +209,8 @@ class AsyncSessions:
                 'password': password,
                 'ip_address': ip_address
             }
+            if enable_pw != '':
+                args['enable_pw'] = enable_pw
             if verbose:
                 print(f'Trying: {ip_address}')
             with Connection(**args) as session:
