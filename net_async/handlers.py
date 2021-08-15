@@ -76,7 +76,7 @@ class Connection:
         self.serial = ''
         self.rommon_version = ''
 
-        #       TODO: Add full 'show inventory' inventory and switch stack inventory from multiple entries in show version
+        # TODO: Add full 'show inventory' inventory and switch stack inventory from multiple entries in show version
 
         def inventory(showver):
             if self.devicetype.__contains__('cisco_ios'):
@@ -284,4 +284,3 @@ class AsyncSessions:
             raise InputError('No Management IP Addresses found')
 
         multithread(connection, mgmt_ips)
-
