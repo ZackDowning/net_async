@@ -208,6 +208,16 @@ class AsyncSessions:
         self.failed_devices = []
         self.outputs = []
         screen_lock = Semaphore(value=1)
+
+        def white_space(max_length, string):
+            current_length = len(string)
+            space = ''
+            if current_length < max_length:
+                diff = max_length - current_length
+                for num in range(diff):
+                    space += ''
+            return space
+
         def sync_print(msg):
             screen_lock.acquire()
             print(msg)
@@ -219,10 +229,11 @@ class AsyncSessions:
                 'password': password,
                 'ip_address': ip_address
             }
+            ip_space = white_space(15, ip_address)
             if enable_pw != '':
                 args['enable_pw'] = enable_pw
             if verbose:
-                sync_print(f'Trying: {ip_address}')
+                sync_print(f'Trying  | {ip_address}{ip_space}')
             with Connection(**args) as session:
                 if session.authorization:
                     device = {
@@ -242,7 +253,7 @@ class AsyncSessions:
                     )
                     self.successful_devices.append(device)
                     if verbose:
-                        sync_print(f'Success: {ip_address} | {session.hostname}')
+                        sync_print(f'Success | {ip_address}{ip_space} | {session.hostname}')
                 else:
                     device = {
                         'ip_address': ip_address,
@@ -255,7 +266,7 @@ class AsyncSessions:
                     }
                     self.failed_devices.append(device)
                     if verbose:
-                        sync_print(f'Failure: {ip_address}')
+                        sync_print(f'Failure | {ip_address}{ip_space}')
         try:
             multithread(connection, mgmt_ips)
         except TypeError:
