@@ -233,7 +233,7 @@ class AsyncSessions:
             if enable_pw != '':
                 args['enable_pw'] = enable_pw
             if verbose:
-                sync_print(f'Trying  | {ip_address}{ip_space}')
+                sync_print(f'Trying  | {ip_address}{ip_space} |')
             with Connection(**args) as session:
                 if session.authorization:
                     device = {
