@@ -45,7 +45,7 @@ class Connection:
             enable_pw = arg('enable_pw')
         except MissingArgument:
             enable_pw = ''
-        ip_address = arg('ip_address')
+        self.ip_address = arg('ip_address')
         username = arg('username')
         password = arg('password')
         self.con_type = None
@@ -59,7 +59,7 @@ class Connection:
         self.devicetype = devicetype
         self.device = {
             'device_type': self.devicetype,
-            'ip': ip_address,
+            'ip': self.ip_address,
             'username': username,
             'password': password,
             'fast_cli': False
