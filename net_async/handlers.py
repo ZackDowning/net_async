@@ -215,7 +215,7 @@ class AsyncSessions:
             if current_length < max_length:
                 diff = max_length - current_length
                 for num in range(diff):
-                    space += ''
+                    space += ' '
             return space
 
         def sync_print(msg):
