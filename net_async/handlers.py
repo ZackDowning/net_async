@@ -266,7 +266,7 @@ class AsyncSessions:
                     }
                     self.failed_devices.append(device)
                     if verbose:
-                        sync_print(f'Failure | {ip_address}{ip_space}')
+                        sync_print(f'Failure | {ip_address}{ip_space} |')
         try:
             multithread(connection, mgmt_ips)
         except TypeError:
