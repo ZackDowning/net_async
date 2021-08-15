@@ -2,7 +2,7 @@ import os
 import sys
 from multiprocessing.dummy import Pool
 from netmiko import ConnectHandler, ssh_exception, SSHDetect
-from net_async.exceptions import TemplatesNotFoundWithinPackage, MissingArgument, InputError
+from net_async.exceptions import TemplatesNotFoundWithinPackage, MissingArgument, InputError, ForceSessionRetry
 from textfsm.parser import TextFSMError
 from threading import Semaphore
 
@@ -236,39 +236,44 @@ class AsyncSessions:
                 args['enable_pw'] = enable_pw
             if verbose:
                 sync_print(f'Trying  | {ip_address}{ip_space} |')
-            with Connection(**args) as session:
-                if session.authorization:
-                    device = {
-                        'ip_address': ip_address,
-                        'connection_type': session.con_type,
-                        'hostname': session.hostname,
-                        'model': session.model,
-                        'rommon': session.rommon_version,
-                        'software_version': session.software_version,
-                        'serial': session.serial
-                    }
-                    self.outputs.append(
-                        {
-                            'device': device,
-                            'output': function(session)
+            while True:
+                with Connection(**args) as session:
+                    if session.authorization:
+                        device = {
+                            'ip_address': ip_address,
+                            'connection_type': session.con_type,
+                            'hostname': session.hostname,
+                            'model': session.model,
+                            'rommon': session.rommon_version,
+                            'software_version': session.software_version,
+                            'serial': session.serial
                         }
-                    )
-                    self.successful_devices.append(device)
-                    if verbose:
-                        sync_print(f'Success | {ip_address}{ip_space} | {session.hostname}')
-                else:
-                    device = {
-                        'ip_address': ip_address,
-                        'connection_type': session.con_type,
-                        'device_type': session.devicetype,
-                        'connectivity': session.connectivity,
-                        'authentication': session.authentication,
-                        'authorization': session.authorization,
-                        'exception': session.exception
-                    }
-                    self.failed_devices.append(device)
-                    if verbose:
-                        sync_print(f'Failure | {ip_address}{ip_space} |')
+                        try:
+                            self.outputs.append(
+                                {
+                                    'device': device,
+                                    'output': function(session)
+                                }
+                            )
+                            self.successful_devices.append(device)
+                            if verbose:
+                                sync_print(f'Success | {ip_address}{ip_space} | {session.hostname}')
+                        except ForceSessionRetry:
+                            continue
+                    else:
+                        device = {
+                            'ip_address': ip_address,
+                            'connection_type': session.con_type,
+                            'device_type': session.devicetype,
+                            'connectivity': session.connectivity,
+                            'authentication': session.authentication,
+                            'authorization': session.authorization,
+                            'exception': session.exception
+                        }
+                        self.failed_devices.append(device)
+                        if verbose:
+                            sync_print(f'Failure | {ip_address}{ip_space} |')
+                    break
 
         try:
             if len(mgmt_ips) == 0:

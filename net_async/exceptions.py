@@ -8,3 +8,7 @@ class MissingArgument(Exception):
 
 class InputError(Exception):
     pass
+
+
+class ForceSessionRetry(Exception):
+    pass
