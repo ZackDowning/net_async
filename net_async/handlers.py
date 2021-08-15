@@ -4,6 +4,7 @@ from multiprocessing.dummy import Pool
 from netmiko import ConnectHandler, ssh_exception, SSHDetect
 from net_async.exceptions import TemplatesNotFoundWithinPackage, MissingArgument, InputError
 from textfsm.parser import TextFSMError
+from threading import Semaphore
 
 # Checks for TextFSM templates within single file bundle if code is frozen
 if getattr(sys, 'frozen', False):
@@ -206,6 +207,11 @@ class AsyncSessions:
         self.successful_devices = []
         self.failed_devices = []
         self.outputs = []
+        screen_lock = Semaphore(value=1)
+        def sync_print(msg):
+            screen_lock.acquire()
+            print(msg)
+            screen_lock.release()
 
         def connection(ip_address):
             args = {
@@ -216,7 +222,7 @@ class AsyncSessions:
             if enable_pw != '':
                 args['enable_pw'] = enable_pw
             if verbose:
-                print(f'Trying: {ip_address}')
+                sync_print(f'Trying: {ip_address}')
             with Connection(**args) as session:
                 if session.authorization:
                     device = {
@@ -236,7 +242,7 @@ class AsyncSessions:
                     )
                     self.successful_devices.append(device)
                     if verbose:
-                        print(f'Success: {ip_address} | {session.hostname}')
+                        sync_print(f'Success: {ip_address} | {session.hostname}')
                 else:
                     device = {
                         'ip_address': ip_address,
@@ -249,7 +255,7 @@ class AsyncSessions:
                     }
                     self.failed_devices.append(device)
                     if verbose:
-                        print(f'Failure: {ip_address}')
+                        sync_print(f'Failure: {ip_address}')
         try:
             multithread(connection, mgmt_ips)
         except TypeError:
