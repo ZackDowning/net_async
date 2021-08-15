@@ -235,7 +235,7 @@ class AsyncSessions:
             if enable_pw != '':
                 args['enable_pw'] = enable_pw
             if verbose:
-                sync_print(f'Trying  | {ip_address}{ip_space} |')
+                sync_print(f'Trying   | {ip_address}{ip_space} |')
             while True:
                 with Connection(**args) as session:
                     if session.authorization:
@@ -257,8 +257,10 @@ class AsyncSessions:
                             )
                             self.successful_devices.append(device)
                             if verbose:
-                                sync_print(f'Success | {ip_address}{ip_space} | {session.hostname}')
+                                sync_print(f'Success  | {ip_address}{ip_space} | {session.hostname}')
                         except ForceSessionRetry:
+                            if verbose:
+                                sync_print(f'Retrying | {ip_address}{ip_space} | {session.hostname}')
                             continue
                     else:
                         device = {
@@ -272,7 +274,7 @@ class AsyncSessions:
                         }
                         self.failed_devices.append(device)
                         if verbose:
-                            sync_print(f'Failure | {ip_address}{ip_space} |')
+                            sync_print(f'Failure  | {ip_address}{ip_space} |')
                     break
 
         try:
