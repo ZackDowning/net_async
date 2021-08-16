@@ -5,6 +5,7 @@ from netmiko import ConnectHandler, ssh_exception, SSHDetect
 from net_async.exceptions import TemplatesNotFoundWithinPackage, MissingArgument, InputError, ForceSessionRetry
 from textfsm.parser import TextFSMError
 from threading import Semaphore
+import encodings.idna
 
 # Checks for TextFSM templates within single file bundle if code is frozen
 if getattr(sys, 'frozen', False):
