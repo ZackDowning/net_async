@@ -83,4 +83,4 @@ These attributes include the following:
 - rommon_version = string 'Device rommon / operating system'  
 - send_command() = function 'Provide string of command to send to device, returns output'  
 - send_config_set() = function 'Provide list of configuration commands to send to device, returns output'  
-- send_config_file() = function 'Provide string of file location of file containing configuration commands to send to device to send to device, returns output'  
+- send_config_file() = function 'Provide string of file location containing configuration commands to send to device to send to device, returns output'  
