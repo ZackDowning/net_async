@@ -57,7 +57,7 @@ class Connection:
         self.connectivity = False
         self.authentication = False
         self.authorization = False
-        self.priviledged = False
+        self.privileged = False
         self.session = None
         self.enable = enable
         self.devicetype = devicetype
