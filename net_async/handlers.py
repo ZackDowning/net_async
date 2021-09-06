@@ -112,7 +112,7 @@ class Connection:
                         self.authorization = True
                         self.hostname = showver[0]['hostname']
                         if not self.send_command('show run').__contains__('Invalid input detected'):
-                            self.priviledged = True
+                            self.privileged = True
                     break
                 else:
                     self.session = ConnectHandler(**device)
@@ -126,7 +126,7 @@ class Connection:
                             self.device['secret'] = enable_pw
                             self.session.disconnect()
                         else:
-                            self.priviledged = True
+                            self.privileged = True
                             break
                     else:
                         break
