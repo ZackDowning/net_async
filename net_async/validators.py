@@ -2,6 +2,10 @@ import re
 
 
 def ipv4(address):
+    """
+    :param address: MAC Address
+    :return: Bool if valid format
+    """
     if re.fullmatch(
             r'(([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.){3}'
             r'([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])'
@@ -12,6 +16,10 @@ def ipv4(address):
 
 
 def ipv6(address):
+    """
+    :param address: MAC Address
+    :return: Bool if valid format
+    """
     if re.fullmatch(
             r'(([0-9aA-fF]{1,4}:){7}[0-9aA-fF]{1,4}|'
             r'([0-9aA-fF]{1,4}:){7}:|'
@@ -30,6 +38,10 @@ def ipv6(address):
 
 
 def macaddress(address):
+    """
+    :param address: MAC Address
+    :return: Bool if valid format
+    """
     if '.' in address:
         if re.fullmatch(
                 r'(('

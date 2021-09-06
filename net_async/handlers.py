@@ -25,7 +25,7 @@ else:
 
 
 class Connection:
-    """SSH or TELNET Connection Initiator\n"""
+    """SSH or TELNET Connection Initiator"""
 
     def __enter__(self):
         return self
@@ -80,6 +80,11 @@ class Connection:
         # TODO: Add full 'show inventory' inventory and switch stack inventory from multiple entries in show version
 
         def inventory(showver):
+            """
+
+            :param showver: TextFSM 'show version' output
+            :return: Sets device inventory attributes
+            """
             if self.devicetype.__contains__('cisco_ios'):
                 self.software_version = showver[0]['version']
                 self.rommon_version = showver[0]['rommon']
@@ -95,6 +100,11 @@ class Connection:
                         break
 
         def device_check(device):
+            """
+
+            :param device: Device dictionary (self.device)
+            :return: Sets device connectivity attributes
+            """
             while True:
                 if self.enable:
                     self.session = ConnectHandler(**device)
@@ -179,6 +189,10 @@ class Connection:
             self.exception = 'ConnectionResetError'
 
     def send_command(self, command):
+        """
+        :param command: Command to run
+        :return: Output of command
+        """
         if self.session is None:
             pass
         else:
@@ -188,6 +202,10 @@ class Connection:
                 return self.session.send_command(command, delay_factor=60)
 
     def send_config_set(self, config_set):
+        """
+        :param config_set: List of commands
+        :return: Output of commands
+        """
         if self.session is None:
             pass
         else:
@@ -199,6 +217,13 @@ class Connection:
 
 
 def multithread(function=None, iterable=None, threads=100):
+    """
+    Multithreading handler
+
+    :param function: Function to run asyncronously
+    :param iterable: Iterable for multiple threads
+    :param threads: Number of threads to run
+    """
     iter_len = len(iterable)
     if iter_len < threads:
         threads = iter_len
@@ -206,27 +231,84 @@ def multithread(function=None, iterable=None, threads=100):
 
 
 class AsyncSessions:
+    """
+    Manager of asyncronous device connections and function handler\n
+    Attributes\n
+    ----------\n
+    successful_devices : List of devices successfully connected
+        Example device:
+            {
+                'ip_address': ip_address,\n
+                'connection_type': session.con_type,\n
+                'hostname': session.hostname,\n
+                'model': session.model,\n
+                'rommon': session.rommon_version,\n
+                'software_version': session.software_version,\n
+                'serial': session.serial\n
+            }
+    failed_devices : List of failed that failed connectivity checks
+        Example device:
+            {
+                'ip_address': ip_address,\n
+                'connection_type': session.con_type,\n
+                'device_type': session.devicetype,\n
+                'connectivity': session.connectivity,\n
+                'authentication': session.authentication,\n
+                'authorization': session.authorization,\n
+                'exception': session.exception\n
+            }
+    outputs : List of dictionaries containing device info and function output
+        Example:
+            {
+                'device': successful_deviice(see above),\n
+                'output': function return\n
+            }
+
+    :param username: Device management username
+    :param password: Device management password
+    :param mgmt_ips: Management IP addresses for devices
+    :param function: Function to run on each device
+    :param enable_pw: Devices' Enable Password
+    :param verbose: Bool to print progress to screen
+    """
     def __init__(self, username, password, mgmt_ips, function, enable_pw='', verbose=False):
         self.successful_devices = []
+        """List of devices successfully connected"""
         self.failed_devices = []
+        """List of failed that failed connectivity checks"""
         self.outputs = []
+        """List of dictionaries containing device info and function output"""
+
+        # Handler to lock screen to prevent overlapping verbose messages due to multithreading
         screen_lock = Semaphore(value=1)
 
         def white_space(max_length, string):
+            """
+            Calculates whitespace for uniform print spacing
+
+            :param max_length: Max length of possible string
+            :param string: String to parse
+            :return: String of whitespace
+            """
             current_length = len(string)
             space = ''
             if current_length < max_length:
-                diff = max_length - current_length
-                for num in range(diff):
+                delta = max_length - current_length
+                for num in range(delta):
                     space += ' '
             return space
 
         def sync_print(msg):
+            """Screen print handler to prevent multithread print overlapping
+
+            :param msg: String to print
+            """
             screen_lock.acquire()
             print(msg)
             screen_lock.release()
 
         def connection(ip_address):
+            """Base Connection handler"""
             args = {
                 'username': username,
                 'password': password,
@@ -259,6 +341,8 @@ class AsyncSessions:
                             self.successful_devices.append(device)
                             if verbose:
                                 sync_print(f'Success  | {ip_address}{ip_space} | {session.hostname}')
+
+                        # Used to manually force session retry within input function if command output is not desired
                         except ForceSessionRetry:
                             if verbose:
                                 sync_print(f'Retrying | {ip_address}{ip_space} | {session.hostname}')
