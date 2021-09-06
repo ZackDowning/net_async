@@ -81,7 +81,6 @@ class Connection:
 
         def inventory(showver):
             """
-
             :param showver: TextFSM 'show version' output
             :return: Sets device inventory attributes
             """
@@ -101,7 +100,6 @@ class Connection:
 
         def device_check(device):
             """
-
             :param device: Device dictionary (self.device)
             :return: Sets device connectivity attributes
             """
@@ -210,6 +208,18 @@ class Connection:
             pass
         else:
             return self.session.send_config_set(config_set, delay_factor=60)
+
+    def send_config_file(self, config_file):
+        """
+        :param config_file: Location of config .txt file
+        :return: Output of commands
+        """
+        with open(config_file) as file:
+            config_set = file.readlines()
+            if self.session is None:
+                pass
+            else:
+                return self.session.send_config_set(config_set, delay_factor=60)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.session is not None:
