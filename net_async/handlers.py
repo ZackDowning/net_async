@@ -5,7 +5,10 @@ from netmiko import ConnectHandler, ssh_exception, SSHDetect
 from net_async.exceptions import TemplatesNotFoundWithinPackage, MissingArgument, InputError, ForceSessionRetry
 from textfsm.parser import TextFSMError
 from threading import Semaphore
+from logging import basicConfig, exception
 import encodings.idna
+
+basicConfig(filename='error_log.txt')
 
 # Checks for TextFSM templates within single file bundle if code is frozen
 if getattr(sys, 'frozen', False):
@@ -117,7 +120,16 @@ class Connection:
                 else:
                     self.session = ConnectHandler(**device)
                     showver = self.send_command('show version')
-                    if not showver.__contains__('Failed'):
+                    if 'Failed' in showver:
+                        break
+                    elif 'Incorrect' in showver:
+                        showver = self.send_command('show sysinfo')
+                        self.authorization = True
+                        self.privileged = True
+                        self.hostname = showver[0]['system_name']
+                        inventory(showver)
+                        break
+                    else:
                         self.authorization = True
                         self.hostname = showver[0]['hostname']
                         inventory(showver)
@@ -127,8 +139,6 @@ class Connection:
                             self.session.disconnect()
                         else:
                             self.privileged = True
-                            break
-                    else:
                         break
 
         try:
@@ -150,7 +160,7 @@ class Connection:
             self.connectivity = True
             self.con_type = 'SSH'
         except (ConnectionRefusedError, ValueError, ssh_exception.NetmikoAuthenticationException,
-                ssh_exception.NetmikoTimeoutException, ssh_exception.SSHException, ConnectionResetError):
+                ssh_exception.NetmikoTimeoutException, ssh_exception.SSHException):
             try:
                 try:
                     self.device['device_type'] = 'cisco_ios_telnet'
@@ -185,6 +195,8 @@ class Connection:
             self.exception = 'OSError'
         except ConnectionResetError:
             self.exception = 'ConnectionResetError'
+        except Exception as e:
+            exception(e)
 
     def send_command(self, command):
         """
