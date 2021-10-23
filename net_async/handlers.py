@@ -2,7 +2,8 @@ import os
 import sys
 from multiprocessing.dummy import Pool
 from netmiko import ConnectHandler, ssh_exception, SSHDetect
-from net_async.exceptions import TemplatesNotFoundWithinPackage, MissingArgument, InputError, ForceSessionRetry
+from net_async.exceptions import TemplatesNotFoundWithinPackage, MissingArgument, InputError, ForceSessionRetry, \
+    NoConfigPriv
 from textfsm.parser import TextFSMError
 from threading import Semaphore
 from logging import basicConfig, exception
@@ -218,6 +219,8 @@ class Connection:
         """
         if self.session is None:
             pass
+        elif not self.privileged:
+            raise NoConfigPriv
         else:
             return self.session.send_config_set(config_set, delay_factor=60)
 
@@ -230,6 +233,8 @@ class Connection:
             config_set = file.readlines()
             if self.session is None:
                 pass
+            elif not self.privileged:
+                raise NoConfigPriv
             else:
                 return self.session.send_config_set(config_set, delay_factor=60)
 
@@ -336,53 +341,65 @@ class AsyncSessions:
                 'password': password,
                 'ip_address': ip_address
             }
+            no_config_priv = False
             ip_space = white_space(15, ip_address)
             if enable_pw != '':
                 args['enable_pw'] = enable_pw
             if verbose:
                 sync_print(f'Trying   | {ip_address}{ip_space} |')
             while True:
-                with Connection(**args) as session:
-                    if session.authorization:
-                        device = {
-                            'ip_address': ip_address,
-                            'connection_type': session.con_type,
-                            'hostname': session.hostname,
-                            'model': session.model,
-                            'rommon': session.rommon_version,
-                            'software_version': session.software_version,
-                            'serial': session.serial
-                        }
-                        try:
-                            self.outputs.append(
-                                {
-                                    'device': device,
-                                    'output': function(session)
-                                }
-                            )
-                            self.successful_devices.append(device)
-                            if verbose:
-                                sync_print(f'Success  | {ip_address}{ip_space} | {session.hostname}')
+                try:
+                    with Connection(**args) as session:
+                        if session.authorization and not no_config_priv:
+                            device = {
+                                'ip_address': ip_address,
+                                'connection_type': session.con_type,
+                                'hostname': session.hostname,
+                                'model': session.model,
+                                'rommon': session.rommon_version,
+                                'software_version': session.software_version,
+                                'serial': session.serial,
+                                'privileged': session.privileged
+                            }
+                            try:
+                                self.outputs.append(
+                                    {
+                                        'device': device,
+                                        'output': function(session)
+                                    }
+                                )
+                                self.successful_devices.append(device)
+                                if verbose:
+                                    sync_print(f'Success  | {ip_address}{ip_space} | {session.hostname}')
 
-                        # Used to manually force session retry within input function if command output is not desired
-                        except ForceSessionRetry:
+                            # Used to manually force session retry within input function
+                            # if command output is not desired
+                            except ForceSessionRetry:
+                                if verbose:
+                                    sync_print(f'Retrying | {ip_address}{ip_space} | {session.hostname}')
+                                continue
+                            except NoConfigPriv:
+                                no_config_priv = True
+                                continue
+                        else:
+                            if no_config_priv:
+                                session.exception = 'NoConfigPriv'
+                            device = {
+                                'ip_address': ip_address,
+                                'connection_type': session.con_type,
+                                'device_type': session.devicetype,
+                                'connectivity': session.connectivity,
+                                'authentication': session.authentication,
+                                'authorization': session.authorization,
+                                'privileged': session.privileged,
+                                'exception': session.exception
+                            }
+                            self.failed_devices.append(device)
                             if verbose:
-                                sync_print(f'Retrying | {ip_address}{ip_space} | {session.hostname}')
-                            continue
-                    else:
-                        device = {
-                            'ip_address': ip_address,
-                            'connection_type': session.con_type,
-                            'device_type': session.devicetype,
-                            'connectivity': session.connectivity,
-                            'authentication': session.authentication,
-                            'authorization': session.authorization,
-                            'exception': session.exception
-                        }
-                        self.failed_devices.append(device)
-                        if verbose:
-                            sync_print(f'Failure  | {ip_address}{ip_space} |')
-                    break
+                                sync_print(f'Failure  | {ip_address}{ip_space} |')
+                        break
+                except Exception as e:
+                    exception(e)
 
         try:
             if len(mgmt_ips) == 0:

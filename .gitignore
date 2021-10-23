@@ -6,3 +6,4 @@ gui.py
 /dist
 /dist/*
 *.spec
+error_log.txt

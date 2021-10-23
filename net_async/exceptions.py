@@ -16,3 +16,8 @@ class InputError(Exception):
 class ForceSessionRetry(Exception):
     """Used to force session retry"""
     pass
+
+
+class NoConfigPriv(Exception):
+    """Used to force session retry"""
+    pass
