@@ -69,8 +69,7 @@ class Connection:
             'device_type': self.devicetype,
             'ip': self.ip_address,
             'username': username,
-            'password': password,
-            'fast_cli': False
+            'password': password
         }
         if self.enable:
             self.device['secret'] = enable_pw
