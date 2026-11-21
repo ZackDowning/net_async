@@ -1,3 +1,9 @@
+> **Archived: not maintained since 2021.** This repository is read-only and kept for reference. It is not reviewed or fixed any more. Known issues, left as they are:
+> - With a failed SSH login the tool tries the same login again over Telnet (clear text), and SSH host keys are not checked.
+> - The package is not published on PyPI; a package of this name there is not from the author.
+>
+> Run it only on networks you own, and never with an administrator login you cannot change afterwards.
+
 # net_async
 Package for simple asyncronous Cisco IOS(-XE) and NX-OS device management
 ### Requirements
@@ -84,3 +90,6 @@ These attributes include the following:
 - send_command() = function 'Provide string of command to send to device, returns output'  
 - send_config_set() = function 'Provide list of configuration commands to send to device, returns output'  
 - send_config_file() = function 'Provide string of file location containing configuration commands to send to device to send to device, returns output'  
+## Third-party templates
+
+The parser templates in `net_async/templates/` are copied unchanged from [ntc-templates](https://github.com/networktocode/ntc-templates) (Copyright 2015 Jason Edelman, Network to Code, LLC), which is licensed under the Apache License 2.0. Its licence text is in `LICENSE-ntc-templates`. The rest of this repository is under the MIT licence in `LICENSE`.
